@@ -26,10 +26,17 @@ class Test {
   static function readMic( e : SampleEventData ){
     var output : BytesData = kcs.decode( e.data );
     var str : String = output.toString();
+    trace(str);
   }
 }
 
 ```
+
+### Notes
+
+The decoder keeps data that couldn't be decoded 
+after every `decode()` call (incomplete bytes, unterminated UTF-8 characters, etc).
+You can flush these remaining data using the decoder's `init()` method.
 
 ### See also
 
