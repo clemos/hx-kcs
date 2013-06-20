@@ -1,6 +1,6 @@
 #### A [Kansas-City standard](http://en.wikipedia.org/wiki/Kansas_City_standard) decoder written in [Haxe](http://www.haxe.org)
 
-Largely ported from [py-kcs](http://www.dabeaz.com/py-kcs/index.html)
+**Ported from [py-kcs](http://www.dabeaz.com/py-kcs/index.html)**
 
 ### Features
 
@@ -14,6 +14,7 @@ Largely ported from [py-kcs](http://www.dabeaz.com/py-kcs/index.html)
 
 import kcs.Decoder;
 import flash.media.Microphone;
+import flash.events.SampleDataEvent;
 
 class Test {
   static function main(){
