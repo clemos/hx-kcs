@@ -18,7 +18,7 @@ class Decoder {
 
 	static var bitmasks = [0x1,0x2,0x4,0x8,0x10,0x20,0x40,0x80];
 
-	public var dump : String;
+	//public var dump : String;
 	var changeBits : Vector<Int>;
 	var t = 0;
 	var previous = 0;
@@ -29,9 +29,13 @@ class Decoder {
 	var output : BytesData;
 	
 	public function new(){
+		init();
+	}
+
+	public function init(){
 		changeBits = new Vector();
 		bytes = new BytesData();
-		dump = "";
+		//dump = "";
 		output = new BytesData();
 	}
 
@@ -85,7 +89,7 @@ class Decoder {
 				}
 
 				if( byteval > 0 ){
-					dump += String.fromCharCode( byteval );
+					//dump += String.fromCharCode( byteval );
 					output.writeByte( byteval );
 				}
 				
