@@ -1,6 +1,6 @@
 #### A [Kansas-City standard](http://en.wikipedia.org/wiki/Kansas_City_standard) decoder written in [Haxe](http://www.haxe.org)
 
-Created for [Log For Data](http://www.logfordata.net/), largely ported from [py-kcs](http://www.dabeaz.com/py-kcs/index.html)
+Largely ported from [py-kcs](http://www.dabeaz.com/py-kcs/index.html)
 
 ### Features
 
