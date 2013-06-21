@@ -1,12 +1,14 @@
 package kcs;
 
-import haxe.io.BytesData;
+//import haxe.io.BytesData;
 import kcs.tools.Sample;
 
 using kcs.tools.BytesDataTools;
 using kcs.tools.ArrayTools;
 
 import flash.Vector;
+
+private typedef BytesData = flash.utils.ByteArray;
 
 class Decoder {
 
