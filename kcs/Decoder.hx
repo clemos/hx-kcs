@@ -18,7 +18,7 @@ class Decoder {
 	public var baseFreq : Int = 2400;
 	public var frameRate : Int = 44100;
 
-	static var bitmasks = [0x1,0x2,0x4,0x8,0x10,0x20,0x40,0x80];
+	static var bitmasks : Array<Int> = [0x1,0x2,0x4,0x8,0x10,0x20,0x40,0x80];
 
 	//public var dump : String;
 	var changeBits : Array<Int>;
@@ -62,7 +62,7 @@ class Decoder {
 		
 		t++;
 		var bitStream = changeBits;//bitStream.concat( s );
-		trace("bitstream "+bitStream.length);
+		//trace("bitstream "+bitStream.length);
 		//var outp = new BytesData();
 		var framesPerBit : Int = Std.int( Math.floor( frameRate * 8 / baseFreq ) );
 		if( sample == null )
@@ -72,16 +72,17 @@ class Decoder {
 			sample.push( bitStream.shift() );
 		}
 		
-		var byteval = 0;
+		var byteval : Int = 0;
 		var val = 0;
 		var bit = 0;
 
 		while( Std.int(bitStream.length) > framesPerBit * 12 ){
 			
 			sample.push( bitStream.shift() );
-			
+
 			if( sample.sum() <= 9 ){
 				byteval = 0;
+				//var bin = "";
 				for( mask in bitmasks ){
 					for( _ in 0...framesPerBit ){
 						sample.push( bitStream.shift() );
@@ -89,11 +90,13 @@ class Decoder {
 					//sums += " "+sample.sum();
 					if( sample.sum() >= 12 ){
 						byteval |= mask;
+						//bin += "1";
+					}else{
+						//bin += "0";
 					}
 				}
 
 				if( byteval > 0 ){
-					//dump += String.fromCharCode( byteval );
 					output.writeByte( byteval );
 				}
 				
@@ -109,25 +112,25 @@ class Decoder {
 
 	}
 
-	function readChar(){
+	function readChar() : BytesData {
 		//trace("read");
 		//trace( output.bytesAvailable );
-		var firstByte = output.readByte();
+		var firstByte : Int = output.readUnsignedByte();
 		var n : Int = 0;
 		var nbytes : Int = 0;
 		var ch : Int = firstByte;
-
-		var outp = new BytesData();
 		
+		var outp = new BytesData();
+		//trace("ch "+ch);
 		if (ch <= 0x7F) /* 0XXX XXXX one byte */
 	    {
-	    	//trace("single byte");
+	   		//trace("single byte");
 	         n = ch;
 	         nbytes = 1;
 	     }
 	     else if ((ch & 0xE0) == 0xC0)  /* 110X XXXX  two bytes */
 	     {
-	     	//trace("two bytes");
+	    	//trace("two bytes");
 	         n = ch & 31;
 	         nbytes = 2;
 	     }
@@ -139,6 +142,7 @@ class Decoder {
 	     }
 	     else if ((ch & 0xF8) == 0xF0)  /* 1111 0XXX  four bytes */
 	     {
+	     	//trace("four bytes");
 	         n = ch & 7;
 	         nbytes = 4;
 	     }
@@ -156,13 +160,10 @@ class Decoder {
 	     }
 	     else
 	     {
-	         /* not a valid first byte of a UTF-8 sequence */
-	         n = ch;
-	         nbytes = 1;
-	         //trace("invalid sequence");
-	         throw "Error: Invalid sequence";
+	         /* not a valid first byte of a UTF-8 sequence, skipping */
+	         return outp;
 	     }
-
+	     
 	     outp.writeByte( ch );
 
 	     if( output.bytesAvailable < nbytes-1 ){
@@ -198,6 +199,7 @@ class Decoder {
 		generateBytes();
 		
 		output.position = 0;
+		
 		var str = new BytesData();
 		
 		while( output.bytesAvailable > 0 ){
@@ -206,14 +208,18 @@ class Decoder {
 				if( ch == null ) break;
 				str.writeBytes(ch);
 			}catch(e: Dynamic){
+				trace(e);
 				break;
 			}
 		}
 
+		//trace("str length",str.length);
+
 		var remaining = new BytesData();
-		remaining.writeBytes( output , output.position );
+		if( output.bytesAvailable > 0 ){
+			remaining.writeBytes( output , output.position , output.bytesAvailable );
+		}
 		output = remaining;
-		output.position = 0;
 		
 		return str;
 		
