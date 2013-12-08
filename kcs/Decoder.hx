@@ -1,12 +1,14 @@
 package kcs;
 
-import haxe.io.BytesData;
+//import haxe.io.BytesData;
 import kcs.tools.Sample;
 
 using kcs.tools.BytesDataTools;
 using kcs.tools.ArrayTools;
 
 import flash.Vector;
+
+private typedef BytesData = flash.utils.ByteArray;
 
 class Decoder {
 
@@ -19,7 +21,7 @@ class Decoder {
 	static var bitmasks = [0x1,0x2,0x4,0x8,0x10,0x20,0x40,0x80];
 
 	//public var dump : String;
-	var changeBits : Vector<Int>;
+	var changeBits : Array<Int>;
 	var t = 0;
 	var previous = 0;
 
@@ -33,7 +35,7 @@ class Decoder {
 	}
 
 	public function init(){
-		changeBits = new Vector();
+		changeBits = new Array();
 		bytes = new BytesData();
 		//dump = "";
 		output = new BytesData();
@@ -44,6 +46,7 @@ class Decoder {
 		var b;
 		var f;
 
+		var pos = bytes.position;
 		while( Std.int(bytes.bytesAvailable) >= sampleWidth ){
 			b = bytes.readByte();
 			signBit = b & 0x80;
@@ -51,6 +54,7 @@ class Decoder {
 			previous = signBit;
 			bytes.position += sampleWidth - 1;
 		}
+		bytes.position = pos;
 
 	}
 
@@ -58,7 +62,7 @@ class Decoder {
 		
 		t++;
 		var bitStream = changeBits;//bitStream.concat( s );
-		
+		trace("bitstream "+bitStream.length);
 		//var outp = new BytesData();
 		var framesPerBit : Int = Std.int( Math.floor( frameRate * 8 / baseFreq ) );
 		if( sample == null )
@@ -109,24 +113,27 @@ class Decoder {
 		//trace("read");
 		//trace( output.bytesAvailable );
 		var firstByte = output.readByte();
-		var n : UInt = 0;
-		var nbytes : UInt = 0;
-		var ch : UInt = firstByte;
+		var n : Int = 0;
+		var nbytes : Int = 0;
+		var ch : Int = firstByte;
 
 		var outp = new BytesData();
 		
 		if (ch <= 0x7F) /* 0XXX XXXX one byte */
 	    {
+	    	//trace("single byte");
 	         n = ch;
 	         nbytes = 1;
 	     }
 	     else if ((ch & 0xE0) == 0xC0)  /* 110X XXXX  two bytes */
 	     {
+	     	//trace("two bytes");
 	         n = ch & 31;
 	         nbytes = 2;
 	     }
 	     else if ((ch & 0xF0) == 0xE0)  /* 1110 XXXX  three bytes */
 	     {
+	     	//trace("three bytes");
 	         n = ch & 15;
 	         nbytes = 3;
 	     }
@@ -152,7 +159,8 @@ class Decoder {
 	         /* not a valid first byte of a UTF-8 sequence */
 	         n = ch;
 	         nbytes = 1;
-	         //throw "Error: Invalid sequence";
+	         //trace("invalid sequence");
+	         throw "Error: Invalid sequence";
 	     }
 
 	     outp.writeByte( ch );
@@ -182,49 +190,31 @@ class Decoder {
 
 	public function decode( b : BytesData ) {
 		var pos = bytes.position;
-		while( b.bytesAvailable > 0 ){
-			bytes.writeByte( b.readByte() );
-		}
+
+		bytes.writeBytes( b );
 		bytes.position = pos;
+		
 		generateChangeBits();
 		generateBytes();
 		
 		output.position = 0;
 		var str = new BytesData();
+		
 		while( output.bytesAvailable > 0 ){
 			try{
 				var ch = readChar();
 				if( ch == null ) break;
-				/*if( ch.length > 1 ){
-					trace("UTF8");
-					//ch.readByte(); // drop one
-					try{
-					trace(ch.readUTFBytes(ch.length));
-					}catch(e:Dynamic){
-						trace("Invalid UTF");
-						trace(e);
-					}
-				}
-				ch.position = 0;*/
-				while( ch.bytesAvailable > 0 ){
-					str.writeByte( ch.readByte() );
-				}
+				str.writeBytes(ch);
 			}catch(e: Dynamic){
-				//trace(e);
-				//trace(output.position + "/" + output.length);
 				break;
 			}
 		}
 
 		var remaining = new BytesData();
-		while( output.bytesAvailable > 0 ){
-			remaining.writeByte( output.readByte() );
-		}
+		remaining.writeBytes( output , output.position );
 		output = remaining;
-		output.position = output.length;
-		/*if( output.length > 0 ){
-			trace("left : "+output.length);
-		}*/
+		output.position = 0;
+		
 		return str;
 		
 	}
